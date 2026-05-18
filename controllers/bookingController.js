@@ -5,8 +5,6 @@ import Booking from '../models/booking.js';
 // @access  Private (Logged in users only)
 export const createBooking = async (req, res, next) => {
   try {
-    
-
     // 1. Accept the new paymentDetails from the frontend!
     const { tour, selectedDate, guests, totalAmount, paymentDetails } = req.body;
 
@@ -49,7 +47,7 @@ export const getAllBookingsAdmin = async (req, res, next) => {
   try {
     // Populate both user and tour for the Admin Dashboard
     const bookings = await Booking.find()
-      .populate('user', 'firstName email')
+      .populate('user', 'firstName lastName email')
       .populate('tour', 'title tourId')
       .sort({ createdAt: -1 });
     
@@ -93,8 +91,6 @@ export const updateBooking = async (req, res, next) => {
     booking.selectedDate = req.body.selectedDate || booking.selectedDate;
     booking.guests = req.body.guests || booking.guests;
     booking.totalAmount = req.body.totalAmount || booking.totalAmount;
-    
-    // Inside controllers/bookingController.js -> updateBooking()
 
     // ... 6. STRICT STATUS LOGIC ...
     if (req.body.status) {
@@ -132,7 +128,6 @@ export const updateBooking = async (req, res, next) => {
 
     // Save and return the updated booking
     const updatedBooking = await booking.save();
-// ...
 
     res.status(200).json({
       message: "Booking updated successfully",
@@ -148,7 +143,9 @@ export const updateBooking = async (req, res, next) => {
 // @access  Private/Admin
 export const processRefundAdmin = async (req, res, next) => {
   try {
-    const booking = await Booking.findById(req.params.id);
+    const booking = await Booking.findById(req.params.id)
+      .populate('user', 'firstName lastName email')
+      .populate('tour', 'title tourId');
 
     if (!booking) {
       res.status(404);
@@ -167,6 +164,39 @@ export const processRefundAdmin = async (req, res, next) => {
 
     res.status(200).json({
       message: "Refund processed successfully",
+      booking: updatedBooking
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ==========================================
+// NEW ROUTE LOGIC: Mark Booking as Completed
+// ==========================================
+// @desc    Mark booking as completed by Admin
+// @route   PATCH /api/bookings/:id/complete
+// @access  Private/Admin
+export const markBookingCompleteAdmin = async (req, res, next) => {
+  try {
+    // Find the booking and populate user/tour data so the frontend UI updates smoothly
+    const booking = await Booking.findById(req.params.id)
+      .populate('user', 'firstName lastName email')
+      .populate('tour', 'title tourId');
+
+    if (!booking) {
+      res.status(404);
+      throw new Error("Booking not found");
+    }
+
+    // Change the status
+    booking.status = 'Completed';
+
+    // Save to the database
+    const updatedBooking = await booking.save();
+
+    res.status(200).json({
+      message: "Booking marked as completed successfully",
       booking: updatedBooking
     });
   } catch (error) {
