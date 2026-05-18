@@ -4,7 +4,8 @@ import {
   getMyBookings, 
   getAllBookingsAdmin,
   updateBooking,
-  processRefundAdmin
+  processRefundAdmin,
+  markBookingCompleteAdmin // <-- 1. Import the new function
 } from '../controllers/bookingController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -20,14 +21,16 @@ router.route('/')
 
 router.route('/mybookings').get(getMyBookings);
 
-
-
-// --- NEW ROUTE ---
 // Target a specific booking by ID to update it
 router.route('/:id')
-  .put(updateBooking); // Protect is already applied via router.use(protect) above
+  .put(updateBooking); 
 
-// Add this route (Ensure it's protected by admin middleware)
-router.route('/:id/process-refund').patch(protect, admin, processRefundAdmin);
+// Process a refund
+router.route('/:id/process-refund')
+  .patch(admin, processRefundAdmin);
 
-export default router;  
+// --- NEW ROUTE: Mark tour as completed ---
+router.route('/:id/complete')
+  .patch(admin, markBookingCompleteAdmin); // <-- 2. Route it!
+
+export default router;
