@@ -10,21 +10,22 @@ import errorHandler from './middleware/errorMiddleware.js';
 import path from 'path'; 
 import uploadRoutes from './routes/uploadRoutes.js';
 
+// This is perfectly fine to leave here!
 dotenv.config();
 
 const app = express();
 
-// 1. UPDATED CORS to allow both local and live frontend
+// 1. FIXED CORS: Allows both your local laptop and your live internet website
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://bookingbuddy-one.vercel.app'], // <-- Update this later with your real Vercel URL
+  origin: ['http://localhost:3000', 'https://bookingbuddy-one.vercel.app'], // <-- Double check this is your exact Vercel URL!
   credentials: true 
 }));
 
-// 2. Cleaned up body parsers
+// 2. FIXED PARSERS: Removed the duplicate express.json()
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Static folder for images (Note: Images will clear on Render restart)
+// Static folder for images
 const __dirname = path.resolve();
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
@@ -38,7 +39,7 @@ app.use('/api/reviews', reviewRoutes);
 // THE ERROR HANDLER MUST BE THE VERY LAST APP.USE()!
 app.use(errorHandler);
 
-// 3. UPDATED to match your .env variable name
+// 3. FIXED DATABASE URI: Matches the MONGO_URI variable in Render
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
